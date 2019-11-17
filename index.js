@@ -63,24 +63,28 @@ SungrowInverter.prototype = {
     client.setID(1);
 
     setInterval(function() {
-      client.readInputRegisters(5016, 1, function(err, data) {
-        if (data && data.data && data.data[0]) {
-          this.log("Current power: ", data.data[0]);
-          this.bufferData = data.data[0];
-          this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(1);
-          this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(1);
-          this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(data.data[0]);
-          this.loggingService.addEntry({time: moment().unix(), power: data.data[0]});
-        } else if (this.bufferData && this.bufferData>10) { 
-          this.log("Current power from buffer: ", this.bufferData);
-        } else {
-          this.log("Current power: ", 0);
-          this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(0);
-          this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(0);
-          this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(0);
-          this.loggingService.addEntry({time: moment().unix(), power: 0});
-        }
-      }.bind(this));
+      try {
+        client.readInputRegisters(5016, 1, function(err, data) {
+          if (data && data.data && data.data[0]) {
+            this.log("Current power: ", data.data[0]);
+            this.bufferData = data.data[0];
+            this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(1);
+            this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(1);
+            this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(data.data[0]);
+            this.loggingService.addEntry({time: moment().unix(), power: data.data[0]});
+          } else if (this.bufferData && this.bufferData>10) { 
+            this.log("Current power from buffer: ", this.bufferData);
+          } else {
+            this.log("Current power: ", 0);
+            this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(0);
+            this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(0);
+            this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(0);
+            this.loggingService.addEntry({time: moment().unix(), power: 0});
+          }
+        }.bind(this));
+      } catch (err) {
+        this.log(err);
+      }
     }.bind(this), this.config.refreshInterval);
 
     this.loggingService = new FakeGatoHistoryService("energy", Accessory);
