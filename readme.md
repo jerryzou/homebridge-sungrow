@@ -27,6 +27,8 @@ Then edit the config.json of your homebridge. Please find below an example -
 
 The power data is pretty much real-time because it's from the inverter directly. Please note Apple Home app can only show on/off state. You'll need EVE to view the power data and set interesting automation rules. For example - it's raining hard and quite dark during the daytime. The power of the inverter is low and you can automate your lighting based on it.
 
+**One thing tricky here -** After sunset, the solar power is not enough to keep the wifi dongle running and the TCP connection is lost. It would be unnecessary for the program to keep polling data. The accessory will be switched off automatically, so you can setup a daily automation rule to switch it on about 30min after sunrise when the inverter generates enough power to start the network connectivity.
+
 This is my second homebridge plugin. Please pardon me on the immature code. Only got a few hours to work on it.
 
 Thank all the relevant package developers who made this little plugin possible.
