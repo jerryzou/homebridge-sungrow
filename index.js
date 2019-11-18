@@ -79,6 +79,9 @@ SungrowInverter.prototype = {
               this.log("Current power from buffer: ", this.bufferData);
             } else if (this.bufferData && this.bufferData<=10) {
               this.log("Solar power is now very low. Stop polling...");
+              this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(0);
+              this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(0);
+              this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(0);
               this.offline = true;
             } else {
               this.log("Current power: ", 0);
