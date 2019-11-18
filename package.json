@@ -1,6 +1,6 @@
 {
   "name": "homebridge-sungrow",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Homebridge integration for Sungrow inverters.",
   "main": "index.js",
   "scripts": {
