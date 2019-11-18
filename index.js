@@ -68,13 +68,13 @@ SungrowInverter.prototype = {
           this.log("The inverter is now offline.");
         } else {
           client.readInputRegisters(5016, 1, function(err, data) {
-            if (data && data.data && data.data[0]) {
-              this.log("Current power: ", data.data[0]);
-              this.bufferData = data.data[0];
+            if (data && data.buffer.readUInt16BE()) {
+              this.bufferData = data.buffer.readUInt16BE();
+              this.log("Current power: ", this.bufferData);
               this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(1);
               this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(1);
-              this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(data.data[0]);
-              this.loggingService.addEntry({time: moment().unix(), power: data.data[0]});
+              this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(this.bufferData);
+              this.loggingService.addEntry({time: moment().unix(), power: this.bufferData});
             } else if (this.bufferData && this.bufferData>10) {
               this.log("Current power from buffer: ", this.bufferData);
             } else if (this.bufferData && this.bufferData<=10) {
