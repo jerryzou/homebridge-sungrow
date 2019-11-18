@@ -64,24 +64,31 @@ SungrowInverter.prototype = {
 
     setInterval(function() {
       try {
-        client.readInputRegisters(5016, 1, function(err, data) {
-          if (data && data.data && data.data[0]) {
-            this.log("Current power: ", data.data[0]);
-            this.bufferData = data.data[0];
-            this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(1);
-            this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(1);
-            this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(data.data[0]);
-            this.loggingService.addEntry({time: moment().unix(), power: data.data[0]});
-          } else if (this.bufferData && this.bufferData>10) { 
-            this.log("Current power from buffer: ", this.bufferData);
-          } else {
-            this.log("Current power: ", 0);
-            this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(0);
-            this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(0);
-            this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(0);
-            this.loggingService.addEntry({time: moment().unix(), power: 0});
-          }
-        }.bind(this));
+        if (this.offline) {
+          this.log("The inverter is now offline.");
+        } else {
+          client.readInputRegisters(5016, 1, function(err, data) {
+            if (data && data.data && data.data[0]) {
+              this.log("Current power: ", data.data[0]);
+              this.bufferData = data.data[0];
+              this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(1);
+              this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(1);
+              this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(data.data[0]);
+              this.loggingService.addEntry({time: moment().unix(), power: data.data[0]});
+            } else if (this.bufferData && this.bufferData>10) {
+              this.log("Current power from buffer: ", this.bufferData);
+            } else if (this.bufferData && this.bufferData<=10) {
+              this.log("Solar power is now very low. Stop polling...");
+              this.offline = true;
+            } else {
+              this.log("Current power: ", 0);
+              this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(0);
+              this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(0);
+              this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(0);
+              this.loggingService.addEntry({time: moment().unix(), power: 0});
+            }
+          }.bind(this));
+        }
       } catch (err) {
         this.log(err);
       }
@@ -100,7 +107,7 @@ SungrowInverter.prototype = {
   },
 
   _getValue: function(CharacteristicName, callback) {
-    this.log("GET", CharacteristicName);
+    this.log("Get", CharacteristicName);
     const crtPower = this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).value;
     const crtState = crtPower > 0 ? true : false;
     if (CharacteristicName==="On") {
@@ -115,6 +122,20 @@ SungrowInverter.prototype = {
 	},
 
 	_setValue: function(CharacteristicName, value, callback) {
-		callback(null, true);
+    this.log("Set " + CharacteristicName + " to " + value);
+    if (value) {
+      client.connectTCP(this.config.ipAddress, { port: this.config.port });
+      client.setID(1);
+      this.offline = false;
+      this.log("Switched on the monitoring...");
+    } else {
+      this.SungrowInverter.getCharacteristic(Characteristic.On).updateValue(0);
+      this.SungrowInverter.getCharacteristic(Characteristic.OutletInUse).updateValue(0);
+      this.SungrowInverter.getCharacteristic(Characteristic.CustomWatts).updateValue(0);
+      this.loggingService.addEntry({time: moment().unix(), power: 0});
+      this.offline = true;
+      this.log("Switched off the monitoring...");
+    }
+		callback();
 	}
 }
