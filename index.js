@@ -67,7 +67,7 @@ SungrowInverter.prototype = {
         if (this.offline) {
           this.log("The inverter is now offline.");
         } else {
-          client.readInputRegisters(5016, 1, function(err, data) {
+          client.readInputRegisters(5016, 10, function(err, data) {
             if (data && data.buffer.readUInt16BE(0)) {
               this.bufferData = data.buffer.readUInt16BE(0);
               this.log("Current power: ", this.bufferData);
